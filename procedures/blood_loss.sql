@@ -10,6 +10,7 @@ INNER JOIN (
     SELECT DISTINCT
     intake.patientunitstayid,
     FROM physionet-data.eicu_crd.intakeoutput as intake
-    WHERE intake.celllabel='Volume-Transfuse red blood cells'
+    INNER JOIN
+        transfusion_types AS types ON intake.
     ) idx ON idx.patientunitstayid=intake.patientunitstayid
 WHERE intake.celllabel IN ('Blood Loss','Estimated Blood Loss')
