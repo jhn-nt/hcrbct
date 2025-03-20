@@ -3,6 +3,7 @@ import pandas_gbq
 import os
 from pathlib import Path
 from typing import Callable
+from tableone import TableOne
 
 TEMP='/hcrbct'
 
@@ -68,4 +69,35 @@ def treatment_effect(treatment_df:pd.DataFrame,lookup_df:pd.DataFrame,window_siz
     return pd.DataFrame(output)
 
 
+def rename_cols(t1):
+    """
+    Renames the columns as needed.
+    Parameters:
+    - t1 (TableOne): An instance of the TableOne class.
+    Returns:
+    - DataFrame: The modified tableone DataFrame with updated column names.
+    """
+    table_df=t1.tableone
+    table_df.rename(index={
+        "Transfusion Volume": "Transfusion Volume (mL)",
+        "Time to Transfusion": "Time to Transfusion (hours)",
+        "Baseline HGB": "Baseline HGB (g/dL)",
+        "HGB Increment": "HGB Increment (g/dL)"
+    }, inplace=True)
 
+    rename_dict = {
+        'treatment_value, mean (SD)': 'Transfusion Volume (mL), mean (SD)',
+        'treatment_offset, mean (SD)': 'Time to Transfusion (hours), mean (SD)',
+        'baseline, mean (SD)': 'Baseline HGB (g/dL), mean (SD)',
+        'treatment_effect, mean (SD)': 'HGB Increment (g/dL), mean (SD)',
+        'netTotal, mean (SD)' : 'Total Fluids (ml), mean (SD)',
+        'Total_time, mean (SD)': 'ICU Stay Length (hrs), mean (SD)'
+    }
+
+
+    table_df.index = table_df.index.set_levels([
+        [rename_dict.get(label, label) for label in table_df.index.levels[0]],  # First level renamed
+        table_df.index.levels[1]  # Keep second level unchanged
+    ])
+
+    return table_df

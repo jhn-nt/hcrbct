@@ -9,7 +9,6 @@ FROM physionet-data.eicu_crd.intakeoutput as intake
 WHERE intake.celllabel IN ('Volume-Transfuse red blood cells', 'PRBC', 'pRBCs')
 
 
-
 -- SELECT 
 --     intake.patientunitstayid,
 --     intake.intakeoutputid AS itemid,
