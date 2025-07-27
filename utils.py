@@ -4,8 +4,90 @@ import os
 from pathlib import Path
 from typing import Callable
 from tableone import TableOne
+import numpy as np
+
 
 TEMP='/hcrbct'
+
+
+# classify admit_diagnosis into categories
+def classify_condition_category(diagnosis):
+    if pd.isna(diagnosis):
+        return np.nan
+
+    diagnosis = diagnosis.lower()
+
+    categories = {
+        "Hematologic": ["leukemia", "lymphoma", "anemia", "coagulopathy", "pancytopenia", "thrombocytopenia", "neutropenia", "sickle cell", "hematologic"],
+        "Renal": ["renal", "nephrectomy", "kidney", "dialysis", "ureter", "uti"],
+        "Respiratory": ["asthma", "pneumonia", "pulmonary", "bronchitis", "respiratory", "lung", "thoracotomy", "aspiration", "pleural", "tracheostomy"],
+        "Cardiac": ["cardiac", "heart", "mi", "infarction", "angina", "arrhythmia", "valve", "rhythm", "cabg", "effusion", "pericardial", "cardiomyopathy", "transplant"],
+        "Neurologic": ["stroke", "cva", "seizure", "encephalopathy", "neurologic", "coma", "meningitis", "spinal", "brain", "head", "subdural", "epidural", "cranial", "hydrocephalus"],
+        "Oncologic": ["cancer", "neoplasm", "tumor", "mastectomy", "lymphoma", "leukemia"],
+        "Gastrointestinal": ["pancreatitis", "gi", "bowel", "hepatic", "liver", "cholangitis", "abdomen", "colon", "rectal", "gastr", "esophageal", "diverticular", "ileal", "gallbladder", "appendectomy"],
+        "Infectious": ["sepsis", "infection", "abscess", "cellulitis"],
+        "Endocrine/Metabolic": ["diabetic", "hypoglycemia", "hyperglycemic", "thyroid", "addisons", "metabolic", "adrenal"],
+        "Musculoskeletal/Orthopedic": ["fracture", "arthritis", "replacement", "amputation", "orthopedic", "spine", "hip", "knee"],
+        "Obstetric/Gynecologic": ["pregnancy", "cesarean", "hysterectomy", "oophorectomy", "pelvic", "cyst", "ectopic"],
+        "Trauma": ["trauma", "injury", "wound", "contusion", "hematoma"],
+        "Vascular": ["aneurysm", "thrombosis", "embolus", "graft", "endarterectomy", "bypass", "vascular"],
+        "Autoimmune/Immune": ["lupus", "vasculitis", "myositis", "connective tissue"],
+    }
+
+    for category, keywords in categories.items():
+        if any(keyword in diagnosis for keyword in keywords):
+            return category
+
+    return "Other"
+
+
+# Function to check for partial match
+def find_condition_type(diagnosis, category="hematologic"):
+    keyword_map = {
+        "hematologic": {
+            "leukemia": "Leukemia",
+            "pancytopenia": "Pancytopenia",
+            "coagulopathy": "Coagulopathy",
+            "thrombocytopenia": "Thrombocytopenia",
+            "neutropenia": "Neutropenia",
+            "sickle cell": "Sickle Cell Disease",
+            "hematologic": "Hematologic (Other)"
+        },
+        "kidney": {
+            "chronic kidney": "Chronic Kidney Disease",
+            "ckd": "Chronic Kidney Disease",
+            "renal failure": "Kidney Failure",
+            "kidney transplant": "Kidney Transplant",
+            "nephrectomy": "Kidney Surgery",
+            "renal obstruction": "Renal Obstruction",
+            "renal": "Renal Disorder",
+            "hepato-renal": "Hepato-Renal Syndrome",
+            "dialysis": "Dialysis Access"
+        }
+    }
+
+    if pd.isna(diagnosis):
+        return np.nan
+
+    diagnosis = diagnosis.lower()
+    for keyword, label in keyword_map.get(category, {}).items():
+        if keyword in diagnosis:
+            return label
+    return np.nan
+
+
+
+
+def compute_effect_per_unit(row):
+    if pd.isna(row['treatment_effect']) or pd.isna(row['treatment_value']):
+        return np.nan
+    if row['treatment_value'] == 0:
+        return np.nan  # or 0 if you prefer, but better to flag division by zero
+    if row['treatment_effect'] == 0:
+        return 0.0
+    return row['treatment_effect'] / (row['treatment_value'] / 330.0)
+
+
 
 
 def read_gbq(query_path:Path,**kwargs)->pd.DataFrame:
